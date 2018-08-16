@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="lib/VSS.SDK.min.js"></script>
+        <script type="text/javascript">
+            VSS.init({
+                explicitNotifyLoaded: true,
+                usePlatformScripts: true,
+                usePlatformStyles: true
+            });
+    
+            var _defaultTextColour = '#ffffff';
+            var _defaultBackgroundColour = '#009ccc';
+
+            var setRepositoryName = function(name) {
+                var $title = $('.title');
+                $title.text(name);
+            };
+
+            var setBackgroundColour = function(colour) {
+                var $widget = $('.widget');
+                $widget.css('background-color', colour);
+            };
+            
+            var setTextColour = function(colour) {
+                var $widget = $('.widget');
+                $widget.css('color', colour);
+            };
+
+            var setPullRequestCount = function(pullRequestCount) {
+                var $prCount = $('#pullRequestCount');
+                $prCount.text(pullRequestCount);
+            };
+
+            VSS.require(["TFS/Dashboards/WidgetHelpers", "TFS/WorkItemTracking/RestClient", "TFS/VersionControl/GitRestClient"], 
+                function (WidgetHelpers, TFS_Wit_WebApi, TFS_VC_WebApi) {
+                    WidgetHelpers.IncludeWidgetStyles();
+
+                    VSS.register("PullRequestCount", function () {
+                        var projectId = VSS.getWebContext().project.id;
+
+                        var widgetSetup = function (widgetSettings) {
+                            if (widgetSettings == null || widgetSettings.repositoryID == null || widgetSettings.repositoryID == "") {
+                                $('.configure-widget').css('display', 'block');
+                                $('.widget').css('display', 'none');
+                                return WidgetHelpers.WidgetStatusHelper.Unconfigured();
+                            }
+                            else {
+                                $('.configure-widget').css('display', 'none');
+                                $('.widget').css('display', 'block');
+                            }
+
+                            if (widgetSettings.customName.length > 0) {
+                                setRepositoryName(widgetSettings.customName);
+                            }
+                            else {
+                                // Set the title from the specified repository id
+                                TFS_VC_WebApi.getClient().getRepository(widgetSettings.repositoryID).then(function(result) { 
+                                        setRepositoryName(result.name);
+                                    }, function(error) { return WidgetHelpers.WidgetStatusHelper.Failure(error.message); });
+                            }
+                            
+                            // Setup click to Repo
+                            TFS_VC_WebApi.getClient().getRepository(widgetSettings.repositoryID).then(function(result) { 
+                                    $('.widget').on('click', function() {
+                                        window.open(result.remoteUrl, '_parent');
+                                    });
+                                }, function(error) { return WidgetHelpers.WidgetStatusHelper.Failure(error.message); });
+                            
+                            if (widgetSettings.customTextColour.length > 0) {
+                                setTextColour(widgetSettings.customTextColour);
+                            }
+                            else {
+                                setTextColour(_defaultTextColour);
+                            }
+
+                            if (widgetSettings.customBackgroundColour.length > 0) {
+                                setBackgroundColour(widgetSettings.customBackgroundColour);
+                            }
+                            else {
+                                setBackgroundColour(_defaultBackgroundColour);
+                            }
+
+                            // Get the pull requests array so we can get a count of pull requests
+                            TFS_VC_WebApi.getClient().getPullRequests(widgetSettings.repositoryID).then(function (result) {
+                                    setPullRequestCount(result.length);
+                                }, function (error) { return WidgetHelpers.WidgetStatusHelper.Failure(error.message); });
+
+                            return WidgetHelpers.WidgetStatusHelper.Success();
+                        };
+
+                        return {
+                            load: function (widgetSettings) {
+                                return widgetSetup(JSON.parse(widgetSettings.customSettings.data));
+                            },
+                            reload: function (widgetSettings) {
+                                return widgetSetup(JSON.parse(widgetSettings.customSettings.data));
+                            }
+                        }
+                    });
+
+                    VSS.notifyLoadSucceeded();
+                });
+        </script>
+    </head>
+    <body>
+        <div class="widget" style="cursor: pointer;">
+            <div>
+                <h2 class="title"></h2>
+                <div id="pullRequestCount" class="big-count"></div>
+                <div>Pull Requests</div>
+            </div>
+        </div>
+        <div class="configure-widget" style="display: none;">
+            <div style="color: #666; font-size: 16px; white-space: normal; text-align: center; padding-bottom: 6%; padding-top: 30%;">
+                Select Repository
+            </div>
+            <div style="text-align: center;">
+                <img src="img/unconfigured-small.png">
+            </div>
+        </div>
+    </body>
+</html>

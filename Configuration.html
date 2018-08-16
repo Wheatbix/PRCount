@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <link href="css/palette-color-picker.css" rel="stylesheet" />
+        <script src="js/jquery.min.js"></script>
+        <script src="js/palette-color-picker.js"></script>
+        <script src="lib/VSS.SDK.min.js"></script>
+        <script type="text/javascript">
+            VSS.init({
+                explicitNotifyLoaded: true,
+                usePlatformStyles: true
+            });
+
+            var _customWidgetSettings = null;
+            
+            var validateRepostorySelect = function() {
+                var $repositorySelect = $('#repositorySelect');
+                var $errorSingleLineInput = $('#repository .validation-error-text');
+
+                if ($repositorySelect.val() == "") {
+                    $errorSingleLineInput.text('Please select a repository');
+                    $errorSingleLineInput.parent().css('visibility', 'visible').css('height', 'auto');
+                    return;
+                }
+                $errorSingleLineInput.parent().css("visibility", "hidden").css('height', '0');
+            };
+
+            var populateRepostorySelect = function(results) {
+                var $repositorySelect = $("#repositorySelect");
+                var orderedResults = _orderResultsByName(results);
+
+                $repositorySelect.append($("<option />").val(null).text("Please Select..."));
+                $.each(orderedResults, function() {
+                    $repositorySelect.append($("<option />").val(this.id).text(this.name));
+                });
+                
+                // We can only set the selected value once the dropdown has been populated, thats why the set has been defered to here 
+                // as the promise will normally only complete after the VSS.register load has been completed (where idealy i would like to set the selected value)
+                if (_customWidgetSettings && _customWidgetSettings.repositoryID) {
+                    $repositorySelect.val(_customWidgetSettings.repositoryID);
+                }
+
+                validateRepostorySelect();
+            };
+
+            var _orderResultsByName = function(results) {
+                return results.sort(function(a, b) {
+                    if (a.name < b.name) {
+                        return -1;
+                    }
+                    else if (a.name > b.name) {
+                        return 1;
+                    }
+                    return 0;
+                });
+            };
+
+            var getCustomWidgetSettings = function() {
+                var $repositorySelect = $('#repositorySelect');
+                var $customNameTextBox = $('#customNameTextBox');
+                var $customTextColourTextBox = $('#customTextColourTextBox');
+                var $customBackgroundColourTextBox = $('#customBackgroundColourTextBox');
+
+                var customSettings = { data: JSON.stringify({ 
+                        repositoryID: $repositorySelect.val(),
+                        customName: $customNameTextBox.val(),
+                        customTextColour: $customTextColourTextBox.val(),
+                        customBackgroundColour: $customBackgroundColourTextBox.val()
+                    })
+                };
+
+                return customSettings;
+            };
+
+            var loadCustomWidgetSettings = function() {
+                var $repositorySelect = $('#repositorySelect');
+                var $customNameTextBox = $('#customNameTextBox');
+                var $customTextColourTextBox = $('#customTextColourTextBox');
+                var $customBackgroundColourTextBox = $('#customBackgroundColourTextBox');
+
+                if (_customWidgetSettings && _customWidgetSettings.customName) {
+                    $customNameTextBox.val(_customWidgetSettings.customName);
+                }
+
+                if (_customWidgetSettings && _customWidgetSettings.customTextColour) {
+                    $customTextColourTextBox.val(_customWidgetSettings.customTextColour);
+                }
+
+                if (_customWidgetSettings && _customWidgetSettings.customBackgroundColour) {
+                    $customBackgroundColourTextBox.val(_customWidgetSettings.customBackgroundColour);
+                }
+            };
+
+            var loadJQueryWidgets = function() {
+                var $customTextColourTextBox = $('#customTextColourTextBox');
+                var $customBackgroundColourTextBox = $('#customBackgroundColourTextBox');
+
+                $customTextColourTextBox.paletteColorPicker({ clear_btn: null });
+                $customBackgroundColourTextBox.paletteColorPicker({ clear_btn: null });
+            };
+
+            VSS.require(["TFS/Dashboards/WidgetHelpers", "TFS/VersionControl/GitRestClient"], 
+                function (WidgetHelpers, TFS_VC_WebApi) {
+                    WidgetHelpers.IncludeWidgetConfigurationStyles();
+
+                    VSS.register("PullRequestCount.Configuration", function () {
+                        var projectId = VSS.getWebContext().project.id;
+
+                        var $repositorySelect = $('#repositorySelect');
+                        var $customNameTextBox = $('#customNameTextBox');
+                        var $customTextColourTextBox = $('#customTextColourTextBox');
+                        var $customBackgroundColourTextBox = $('#customBackgroundColourTextBox');
+
+                        $repositorySelect.on('change', validateRepostorySelect);
+
+                        TFS_VC_WebApi.getClient().getRepositories(projectId).then(populateRepostorySelect, function(error) { 
+                                return WidgetHelpers.WidgetStatusHelper.Failure(error.message); 
+                            });
+
+                        return {
+                            load: function (widgetSettings, widgetConfigurationContext) {
+                                _customWidgetSettings = JSON.parse(widgetSettings.customSettings.data);
+                                
+                                // Load required data & widgets for configuration editor
+                                loadCustomWidgetSettings();
+                                loadJQueryWidgets();
+
+                                var widgetConfigurationChange = function() {
+                                    var eventName = WidgetHelpers.WidgetEvent.ConfigurationChange;
+                                    var eventArgs = WidgetHelpers.WidgetEvent.Args(getCustomWidgetSettings());
+                                    widgetConfigurationContext.notify(eventName, eventArgs);
+                                };
+
+                                $customNameTextBox.on("change", widgetConfigurationChange);
+                                $customTextColourTextBox.on("change", widgetConfigurationChange);
+                                $customBackgroundColourTextBox.on("change", widgetConfigurationChange);
+
+                                return WidgetHelpers.WidgetStatusHelper.Success();
+                            },
+                            onSave: function() {
+                                var customSettings = getCustomWidgetSettings();
+
+                                return WidgetHelpers.WidgetConfigurationSave.Valid(customSettings); 
+                            }
+                        }
+                    });
+
+                    VSS.notifyLoadSucceeded();
+                });
+        </script>
+    </head>
+    <body>
+        <div class="widget-configuration">
+            <div class="single-line-text-input" id="customName">
+                <label>
+                    Title <small style="font-style: italic;">(leave blank for repository name)</small>
+                </label>
+                <div class="wrapper">
+                    <input id="customNameTextBox" type="text" placeholder="Custom Title..."></input>
+                </div>
+                <span class="validation-error" style="height: 0;">
+                    <span class="icon-error-exclamation"></span>
+                    <span class="validation-error-text"></span>
+                </span>
+            </div>
+            <div class="dropdown" id="repository">
+                <label>Repository</label>
+                <div class="wrapper">
+                    <select id="repositorySelect"></select>
+                </div>
+                <span class="validation-error" style="height: 0;">
+                    <span class="icon-error-exclamation"></span>
+                    <span class="validation-error-text"></span>
+                </span>
+            </div>
+            <div class="single-line-text-input" id="customColour">
+                <label>Custom Background Colour</label>
+                <div class="wrapper">
+                    <input id="customBackgroundColourTextBox" type="text" name="customBackgroundColourTextBox" value="#009ccc" style="display: none;" data-palette='["#222222","#666666","#292e6b","#009ccc","#00643a","#339947","#fbbc3d","#db552c","#7f1725","#ec008c","#5c197b","#51399f","#ffffff","#cccccc","#007acc","#c9e7e7","#7caf9a","#a8ce4b","#fbfd52","#f7a24b","#e60017","#f599d1","#ae88b9","#aa9cdf"]' value="" />
+                </div>
+                <span class="validation-error" style="height: 0;">
+                    <span class="icon-error-exclamation"></span>
+                    <span class="validation-error-text"></span>
+                </span>
+                <label>Custom Text Colour</label>
+                <div class="wrapper">
+                    <input id="customTextColourTextBox" type="text" name="customTextColourTextBox" value="#ffffff" style="display: none;" data-palette='["#222222","#666666","#292e6b","#009ccc","#00643a","#339947","#fbbc3d","#db552c","#7f1725","#ec008c","#5c197b","#51399f","#ffffff","#cccccc","#007acc","#c9e7e7","#7caf9a","#a8ce4b","#fbfd52","#f7a24b","#e60017","#f599d1","#ae88b9","#aa9cdf"]' value="" />
+                </div>
+                <span class="validation-error" style="height: 0;">
+                    <span class="icon-error-exclamation"></span>
+                    <span class="validation-error-text"></span>
+                </span>
+            </div>
+        </div>
+    </body>
+</html>

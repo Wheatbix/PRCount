@@ -1,0 +1,105 @@
+{
+  "manifestVersion": 1,
+  "id": "pull-request-count",
+  "version": "0.2.37",
+  "name": "Pull Request Count",
+  "publisher": "ChristopherWheatcroft",
+  "description": "TFS Dashboard widget that shows the amount of outstanding pull requests for a specified code repository",
+  "categories": [
+    "Code"
+  ],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "scopes": [
+    "vso.code"
+  ],
+  "tags": [
+    "pull request",
+    "widget",
+    "dashboard widget"
+  ],
+  "icons": {
+    "default": "img/logo.png"
+  },
+  "content": {
+    "details": {
+      "path": "readme.md"
+    },
+    "license": {
+      "path": "license.md"
+    }
+  },
+  "contributions": [
+    {
+      "id": "PullRequestCount",
+      "type": "ms.vss-dashboards-web.widget",
+      "targets": [
+        "ms.vss-dashboards-web.widget-catalog",
+        "ChristopherWheatcroft.pull-request-count.PullRequestCount.Configuration"
+      ],
+      "properties": {
+        "name": "Pull Request Count",
+        "description": "Shows the count of pull requests for a specified repository.",
+        "catalogIconUrl": "img/template.png",
+        "previewImageUrl": "img/template_330X160.png",
+        "uri": "PullRequestCount.html",
+        "supportedSizes": [
+          {
+            "rowSpan": 1,
+            "columnSpan": 1
+          }
+        ],
+        "supportedScopes": [
+          "project_team"
+        ]
+      }
+    },
+    {
+      "id": "PullRequestCount.Configuration",
+      "type": "ms.vss-dashboards-web.widget-configuration",
+      "targets": [
+        "ms.vss-dashboards-web.widget-configuration"
+      ],
+      "properties": {
+        "name": "PullRequestCount Configuration",
+        "description": "Configures PullRequestCount Widget",
+        "uri": "Configuration.html"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "PullRequestCount.html",
+      "addressable": true
+    },
+    {
+      "path": "Configuration.html",
+      "addressable": true
+    },
+    {
+      "path": "node_modules/vss-web-extension-sdk/lib",
+      "addressable": true,
+      "packagePath": "lib"
+    },
+    {
+      "path": "node_modules/jquery/dist",
+      "addressable": true,
+      "packagePath": "js"
+    },
+    {
+      "path": "img",
+      "addressable": true
+    },
+    {
+      "path": "js",
+      "addressable": true
+    },
+    {
+      "path": "css",
+      "addressable": true
+    }
+  ]
+}

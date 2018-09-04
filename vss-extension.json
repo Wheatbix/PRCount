@@ -1,10 +1,11 @@
 {
   "manifestVersion": 1,
   "id": "pull-request-count",
-  "version": "0.2.37",
+  "version": "0.2.40",
   "name": "Pull Request Count",
   "publisher": "ChristopherWheatcroft",
-  "description": "TFS Dashboard widget that shows the amount of outstanding pull requests for a specified code repository",
+  "description": "Dashboard widget that shows the number of outstanding pull requests for a specified code repository",
+  "public": true,
   "categories": [
     "Code"
   ],

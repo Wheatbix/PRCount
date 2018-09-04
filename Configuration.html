@@ -111,7 +111,6 @@
                         var $customTextColourTextBox = $('#customTextColourTextBox');
                         var $customBackgroundColourTextBox = $('#customBackgroundColourTextBox');
 
-                        $repositorySelect.on('change', validateRepostorySelect);
 
                         TFS_VC_WebApi.getClient().getRepositories(projectId).then(populateRepostorySelect, function(error) { 
                                 return WidgetHelpers.WidgetStatusHelper.Failure(error.message); 
@@ -134,6 +133,10 @@
                                 $customNameTextBox.on("change", widgetConfigurationChange);
                                 $customTextColourTextBox.on("change", widgetConfigurationChange);
                                 $customBackgroundColourTextBox.on("change", widgetConfigurationChange);
+                                $repositorySelect.on('change', function() { 
+                                    validateRepostorySelect(); 
+                                    widgetConfigurationChange();
+                                });
 
                                 return WidgetHelpers.WidgetStatusHelper.Success();
                             },

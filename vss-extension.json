@@ -20,7 +20,9 @@
   "tags": [
     "pull request",
     "widget",
-    "dashboard widget"
+    "dashboard widget",
+    "git flow",
+    "git"
   ],
   "icons": {
     "default": "img/logo.png"

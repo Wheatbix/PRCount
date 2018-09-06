@@ -63,7 +63,7 @@
                             // Setup click to Repo
                             TFS_VC_WebApi.getClient().getRepository(widgetSettings.repositoryID).then(function(result) { 
                                     $('.widget').on('click', function() {
-                                        window.open(result.remoteUrl, '_parent');
+                                        window.open(result.remoteUrl + '/pullrequests', '_parent');
                                     });
                                 }, function(error) { return WidgetHelpers.WidgetStatusHelper.Failure(error.message); });
                             

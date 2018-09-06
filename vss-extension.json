@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "pull-request-count",
-  "version": "0.2.40",
+  "version": "0.2.41",
   "name": "Pull Request Count",
   "publisher": "ChristopherWheatcroft",
   "description": "Dashboard widget that shows the number of outstanding pull requests for a specified code repository",
